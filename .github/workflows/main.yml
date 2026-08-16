@@ -1,0 +1,47 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extract Android project
+        run: |
+          mkdir android-project
+          unzip -q DigitalAbsensiGprojectapp_GitHub_1Klik_BuildAPK.zip -d android-project
+
+      - name: Find Gradle project
+        run: |
+          echo "Mencari project Android..."
+          find android-project -name gradlew -type f
+
+      - name: Build APK
+        run: |
+          GRADLEW=$(find android-project -name gradlew -type f | head -n 1)
+          PROJECT_DIR=$(dirname "$GRADLEW")
+          cd "$PROJECT_DIR"
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DigitalAbsensiGprojectapp-APK
+          path: |
+            android-project/**/build/outputs/apk/**/*.apk
+          if-no-files-found: error
